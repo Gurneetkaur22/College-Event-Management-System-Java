@@ -1,87 +1,23 @@
-import java.io.*;
+
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
-class User {
-    String username;
-    String name;
-    List<String[]> registeredEvents = new ArrayList<>(); // Each array: [eventName, clubName]
-    List<String> pastEvents = new ArrayList<>();
-
-    User(String username, String name) {
-        this.username = username;
-        this.name = name;
-    }
-}
-
-class Club {
-    String clubId;
-    String clubName;
-    String email;
-    String hashedPassword;
-    List<Event> hostedEvents = new ArrayList<>();
-
-    public String getClubName() {
-        return clubName;
-    }
-
-    Club(String clubId, String clubName, String email, String hashedPassword) {
-        this.clubId = clubId;
-        this.clubName = clubName;
-        this.email = email;
-        this.hashedPassword = hashedPassword;
-    }
-
-    void createEvent(String name, String desc, LocalDate date, LocalTime time,String venue, int capacity) {
-            Event newEvent = new Event(name, desc, date, time, venue, this.clubName, capacity);
-            hostedEvents.add(newEvent);
-        }
-}
-
-class Event {
-    private String name;
-    private String description;
-    private LocalDate date;
-    private LocalTime time;
-    private String venue;
-    private String club;
-    private int capacity;
-    Event next;
-
-    public Event(String name, String description, LocalDate date, LocalTime time,
-                 String venue, String club, int capacity) {
-        this.name = name;
-        this.description = description;
-        this.date = date;
-        this.time = time;
-        this.venue = venue;
-        this.club = club;
-        this.capacity = capacity;
-        this.next = null;
-    }
-
-    public boolean isUpcoming() {
-        return LocalDate.now().isBefore(date);
-    }
-
-    
-    public String getName() { return name; }
-    public String getClub() { return club; }
-    public LocalDate getDate() { return date; }
-    public String getDetails() {
-        return name + " on " + date + " at " + time + ", Venue: " + venue + ", by " + club;
-    }
-
-    public void setName(String name) { this.name = name; }
-    public void setDescription(String description) { this.description = description; }
-    public void setDate(LocalDate date) { this.date = date; }
-    public void setTime(LocalTime time) { this.time = time; }
-    public void setVenue(String venue) { this.venue = venue; }
-    public void setCapacity(int capacity) { this.capacity = capacity; }
-}
+import models.Club;
+import models.Event;
+import models.User;
 
 public class Main {
     static Scanner sc = new Scanner(System.in);
@@ -177,7 +113,7 @@ public class Main {
         String password = sc.nextLine();
         String hashedPassword = hashPassword(password);
 
-        if (clubs.get(clubId).hashedPassword.equals(hashedPassword)) {
+        if (clubs.get(clubId).getHashedPassword().equals(hashedPassword)) {
             System.out.println("✅ Club login successful!");
             clubDashboard(clubs.get(clubId));
         } else {
@@ -187,7 +123,7 @@ public class Main {
 
     static void clubDashboard(Club club) {
         while (true) {
-            System.out.println("\nClub Dashboard - " + club.clubName);
+            System.out.println("\nClub Dashboard - " + club.getClubName());
             System.out.println("1. Create Event");
             System.out.println("2. View Events");
             System.out.println("3. Update Event");
@@ -212,16 +148,16 @@ public class Main {
                     int capacity = Integer.parseInt(sc.nextLine());
 
                     club.createEvent(name, desc, date, time, venue, capacity);
-                    saveEventToFile(club.hostedEvents.get(club.hostedEvents.size() - 1));
+                    saveEventToFile(club.getHostedEvents().get(club.getHostedEvents().size() - 1));
                     System.out.println("✅ Event created successfully.");
 
                 }
                 case 2 -> {
                     System.out.println("📅 Hosted Events:");
-                    LocalDate today = LocalDate.now();
+                    // LocalDate today = LocalDate.now();
                 
                     // Sort events by date
-                    List<Event> sortedEvents = new ArrayList<>(club.hostedEvents);
+                    List<Event> sortedEvents = new ArrayList<>(club.getHostedEvents());
                     sortedEvents.sort(Comparator.comparing(Event::getDate));
                 
                     for (Event e : sortedEvents) {
@@ -234,7 +170,7 @@ public class Main {
                     System.out.print("Enter event name to update: ");
                     String eventName = sc.nextLine().trim();
                     Event eventToUpdate = null;
-                    for (Event e : club.hostedEvents) {
+                    for (Event e : club.getHostedEvents()) {
                         if (e.getName().equalsIgnoreCase(eventName)) {
                             eventToUpdate = e;
                             break;
@@ -272,14 +208,14 @@ public class Main {
                     System.out.print("Enter event name to delete: ");
                     String eventName = sc.nextLine().trim();
                     Event eventToDelete = null;
-                    for (Event e : club.hostedEvents) {
+                    for (Event e : club.getHostedEvents()) {
                         if (e.getName().equalsIgnoreCase(eventName)) {
                             eventToDelete = e;
                             break;
                         }
                     }
                     if (eventToDelete != null) {
-                        club.hostedEvents.remove(eventToDelete);
+                        club.getHostedEvents().remove(eventToDelete);
                         saveAllClubsToFile();
                         System.out.println("✅ Event deleted successfully.");
                     } else {
@@ -308,7 +244,7 @@ public class Main {
         System.out.print("Enter new password: ");
         String newPassword = sc.nextLine();
         String newHashed = hashPassword(newPassword);
-        clubs.get(clubId).hashedPassword = newHashed;
+        clubs.get(clubId).setHashedPassword(newHashed);
         saveAllClubsToFile();
         System.out.println("✅ Club password updated successfully!");
     }
@@ -378,166 +314,109 @@ public class Main {
 
     static void userDashboard(User user) {
         while (true) {
-            System.out.println("\nUser Dashboard - " + user.name);
-            String today = java.time.LocalDate.now().toString();
-    
-            // Displaying Upcoming Events that the user has not registered for
-            System.out.println("📅 Upcoming Events (Not Registered For):");
-            List<Event> eventsToDisplay = new ArrayList<>();
-            Map<String, String> eventMap = new HashMap<>();
-            int count = 1;
-    
-            // Gathering upcoming events
-            for (Club club : clubs.values()) {
-                for (Event event : club.hostedEvents) {
-                    if (event.isUpcoming() && !isUserAlreadyRegistered(user, event)) {
-                        String eventDisplay = count + ". " + event.getName() + " by " + club.clubName + " on " + event.getDate();
-                        eventsToDisplay.add(event);
-                        eventMap.put(event.getName(), eventDisplay);
-                        System.out.println(eventDisplay);
-                        count++;
-                    }
-                }
-            }
-    
-            if (eventsToDisplay.isEmpty()) {
-                System.out.println("- No upcoming events available for registration.");
-            }
-    
-            // Displaying Registered Events
-            System.out.println("\n📝 Your Registered Events:");
-            if (user.registeredEvents.isEmpty()) {
-                System.out.println("- You haven't registered for any events yet.");
-            } else {
-                for (String[] reg : user.registeredEvents) {
-                    System.out.println("- " + reg[0] + " by " + reg[1]);
-                }                
-            }
-
-            System.out.println("Would you like to: ");
-            System.out.println("1. Register for an event");
-            System.out.println("2. Unregister from an event");
-            System.out.println("3. Logout");
+            System.out.println("\nUser Dashboard - " + user.getName());
+            System.out.println("1. View & Register for Upcoming Events");
+            System.out.println("2. View Your Registered Events");
+            System.out.println("3. Cancel Event Registration");
+            System.out.println("4. View Past Events");
+            System.out.println("5. Logout");
             System.out.print("Choose option: ");
+        
             int choice = Integer.parseInt(sc.nextLine());
-            // Option for registering or going back
-            if (choice == 1) {
-                System.out.print("\nEnter event number to register for (or type 'back' to return): ");
-                String input = sc.nextLine();
-    
-                try {
-                    int eventIndex = Integer.parseInt(input) - 1;  // Convert to zero-based index
-                    if (eventIndex >= 0 && eventIndex < eventsToDisplay.size()) {
-                        Event selectedEvent = eventsToDisplay.get(eventIndex);
-                        user.registeredEvents.add(new String[]{selectedEvent.getName(), getClubNameByEvent(selectedEvent)});
-                        saveAllUsersToFile();
-
-                        System.out.println("✅ Successfully registered for: " + eventMap.get(selectedEvent.getName()));
+            switch (choice) {
+                case 1 -> {
+                    List<Event> upcomingEvents = new ArrayList<>();
+                    for (Club club : clubs.values()) {
+                        for (Event event : club.getHostedEvents()) {
+                            if (event.isUpcoming() && !isUserAlreadyRegistered(user, event)) {
+                                upcomingEvents.add(event);
+                            }
+                        }
+                    }
+        
+                    if (upcomingEvents.isEmpty()) {
+                        System.out.println("✅ No new upcoming events available.");
+                        break;
+                    }
+        
+                    System.out.println("\n📅 Upcoming Events:");
+                    for (int i = 0; i < upcomingEvents.size(); i++) {
+                        Event e = upcomingEvents.get(i);
+                        System.out.println((i + 1) + ". " + e.getDetails() );
+                    }
+        
+                    System.out.print("Enter event number to register: ");
+                    int eventChoice = Integer.parseInt(sc.nextLine()) - 1;
+                    if (eventChoice >= 0 && eventChoice < upcomingEvents.size()) {
+                        Event selectedEvent = upcomingEvents.get(eventChoice);
+                        
+                        // Check if the event is at full capacity
+                        if (selectedEvent.getRegisteredUsers().size() < selectedEvent.getCapacity()) {
+                            // Register the user for the event
+                            selectedEvent.getRegisteredUsers().add(user.getName());
+                            user.addRegisteredEvent(new String[]{selectedEvent.getName(), selectedEvent.getClub()});
+                            System.out.println("✅ Successfully registered for the event: " + selectedEvent.getName());
+                            // saveEventToFile(selectedEvent);
+                        } else {
+                            // Add the user to the waitlist
+                            selectedEvent.getWaitlist().offer(user.getName());
+                            System.out.println("❌ Event is at full capacity! You have been added to the waitlist.");
+                            // saveEventToFile(selectedEvent);
+                        }
                     } else {
                         System.out.println("❌ Invalid event number.");
                     }
-                } catch (NumberFormatException e) {
-                    System.out.println("❌ Please enter a valid event number.");
                 }
-            } 
-
-            else if(choice == 2) {
-                System.out.print("\nEnter event name to unregister from: ");
-                String input = sc.nextLine();
-    
-                if (input.equals("back")) {
-                    continue; // Exits the loop if user types 'back'
+                case 2 -> {
+                    System.out.println("\n📅 Your Registered Events:");
+                    if (user.getRegisteredEvents().isEmpty()) {
+                        System.out.println("You have not registered for any events.");
+                    } else {
+                        for (String[] eventDetails : user.getRegisteredEvents()) {
+                            System.out.println("- " + eventDetails[0] + " hosted by " + eventDetails[1]);
+                        }
+                    }
                 }
-    
-                unregisterUserFromEvent(user, input);
-            } 
-
-            else if (choice == 3) {
-                return; // Exits the user dashboard
-            }
-            
-            // else {
-            //     System.out.print("\nNo upcoming events available. Type 'back' to return: ");
-            //     String input = sc.nextLine();
-            //     if (input.equals("back")) {
-            //         return; // Exits the loop if no events are available
-            //     }
-            // }
-            else {
-                System.out.println("❌ Invalid choice!");
+                case 3 -> {
+                    System.out.print("Enter event name to cancel registration: ");
+                    String eventName = sc.nextLine().trim();
+                    Event eventToCancel = null;
+                    for (String[] eventDetails : user.getRegisteredEvents()) {
+                        if (eventDetails[0].equalsIgnoreCase(eventName)) {
+                            eventToCancel = getEventByName(eventDetails[0], eventDetails[1]);
+                            break;
+                        }
+                    }
+                    if (eventToCancel != null) {
+                        eventToCancel.getRegisteredUsers().remove(user.getName());
+                        user.getRegisteredEvents().removeIf(e -> e[0].equals(eventName));
+                        System.out.println("✅ Registration canceled for event: " + eventName);
+                        // Check if anyone on the waitlist can be registered now
+                        if (!eventToCancel.getWaitlist().isEmpty()) {
+                            String waitlistedUser = eventToCancel.getWaitlist().poll();
+                            eventToCancel.getRegisteredUsers().add(waitlistedUser);
+                            System.out.println("✅ Waitlisted user " + waitlistedUser + " has been moved to registered list.");
+                        }
+                        saveEventToFile(eventToCancel);
+                    } else {
+                        System.out.println("❌ You are not registered for the event: " + eventName);
+                    }
+                }
+                case 4 -> {
+                    System.out.println("\n📅 Your Past Events:");
+                    if (user.getPastEvents().isEmpty()) {
+                        System.out.println("You have not attended any events.");
+                    } else {
+                        for (String eventName : user.getPastEvents()) {
+                            System.out.println("- " + eventName);
+                        }
+                    }
+                }
+                case 5 -> { return; }
+                default -> System.out.println("Invalid option.");
             }
         }
     }
-
-    static void unregisterUserFromEvent(User user, String eventName) {
-        // Search for the event by name
-        Event eventToUnregister = null;
-        for (Club club : clubs.values()) {  // Loop through all clubs to find the event
-            for (Event e : club.hostedEvents) {
-                if (e.getName().equals(eventName)) {
-                    eventToUnregister = e;
-                    break;
-                }
-            }
-            if (eventToUnregister != null) {
-                break;
-            }
-        }
-    
-        if (eventToUnregister == null) {
-            System.out.println("❌ Event not found.");
-            return;
-        }
-    
-        // Check if the user is registered for the event
-        boolean isRegistered = false;
-        for (String[] reg : user.registeredEvents) {
-            if (reg[0].equals(eventName)) {
-                isRegistered = true;
-                break;
-            }
-        }
-    
-        if (!isRegistered) {
-            System.out.println("❌ You are not registered for this event.");
-            return;
-        }
-    
-        // Remove the event registration
-        List<String[]> updatedRegistrations = new ArrayList<>();
-        for (String[] reg : user.registeredEvents) {
-            if (!reg[0].equals(eventName)) {
-                updatedRegistrations.add(reg);
-            }
-        }
-    
-        // Update the user's registration list
-        user.registeredEvents = updatedRegistrations;
-        System.out.println("✅ Successfully unregistered from event: " + eventName);
-        
-        // Optionally, save the updated user data to the file
-        saveUserData(user);
-    }
-    
-    static void saveUserData(User user) {
-        // Assuming you want to save the updated user information to file
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt", false))) {
-            for (User u : users.values()) {
-                StringBuilder sb = new StringBuilder();
-                sb.append(u.username).append(",").append(u.name).append(",").append(userCredentials.get(u.username));
-                for (String[] regEvent : u.registeredEvents) {
-                    sb.append(",").append(regEvent[0]).append(":").append(regEvent[1]);
-                }
-                for (String pastEvent : u.pastEvents) {
-                    sb.append(",").append(pastEvent);
-                }
-                writer.write(sb.toString() + "\n");
-            }
-        } catch (IOException e) {
-            System.out.println("Error saving user data.");
-        }
-    }
-    
     
     
     
@@ -571,14 +450,14 @@ public class Main {
     }
 
     static void saveUserToFile(User user, String hashedPassword) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/users.txt", true))) {
             StringBuilder sb = new StringBuilder();
-            sb.append(user.username).append(",").append(user.name).append(",").append(hashedPassword);
+            sb.append(user.getName()).append(",").append(user.getName()).append(",").append(hashedPassword);
 
-            for (String[] regEvent : user.registeredEvents) {
+            for (String[] regEvent : user.getRegisteredEvents()) {
                 sb.append(",").append(regEvent[0]).append(":").append(regEvent[1]);
             }
-            for (String pastEvent : user.pastEvents) {
+            for (String pastEvent : user.getPastEvents()) {
                 sb.append(",").append(pastEvent);
             }
             writer.write(sb.toString() + "\n");
@@ -589,7 +468,7 @@ public class Main {
     }
 
     static void loadUsersFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader("users.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("data/users.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -602,7 +481,7 @@ public class Main {
                     for (int i = 3; i < parts.length; i++) {
                         String[] eventClub = parts[i].split(":");
                         if (eventClub.length == 2) {
-                            user.registeredEvents.add(new String[]{eventClub[0], eventClub[1]});
+                            user.getRegisteredEvents().add(new String[]{eventClub[0], eventClub[1]});
                         }
                     }
                 }
@@ -614,15 +493,15 @@ public class Main {
     
     
     static void saveClubToFile(Club club) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("clubs.txt", true))) {
-            writer.write(club.clubId + "," + club.clubName + "," + club.email + "," + club.hashedPassword + "\n");
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/clubs.txt", true))) {
+            writer.write(club.getClubId() + "," + club.getClubName() + "," + club.getClubEmail() + "," + club.getHashedPassword() + "\n");
         } catch (IOException e) {
             System.out.println("Error writing club to file.");
         }
     }
     
     static void loadClubsFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader("clubs.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("data/clubs.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -632,9 +511,9 @@ public class Main {
     }
     
     static void saveAllClubsToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("clubs.txt"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/clubs.txt"))) {
             for (Club club : clubs.values()) {
-                writer.write(club.clubId + "," + club.clubName + "," + club.email + "," + club.hashedPassword + "\n");
+                writer.write(club.getClubId() + "," + club.getClubName() + "," + club.getClubEmail() + "," + club.getHashedPassword() + "\n");
             }
         } catch (IOException e) {
             System.out.println("Error saving clubs.");
@@ -642,9 +521,9 @@ public class Main {
     }
 
     static void saveEventToFile(Event event) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("events.txt", true))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/events.txt", true))) {
             writer.write( event.getName() + "," + event.getClub() + "," +
-                         event.getDate() + "," + event.getDetails() + "\n");
+                         event.getDate() + "," + event.getDetails() +  "," + event.getCapacity() + "\n");
         } catch (IOException e) {
             System.out.println("Error saving event to file.");
         }
@@ -652,7 +531,7 @@ public class Main {
     
 
     static void loadEventsFromFile() {
-        try (BufferedReader reader = new BufferedReader(new FileReader("events.txt"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("data/events.txt"))) {
             String line;
             while ((line = reader.readLine()) != null) {
                 String[] parts = line.split(",");
@@ -665,7 +544,7 @@ public class Main {
     
                     // Add the event to the respective club
                     if (clubs.containsKey(clubName)) {
-                        clubs.get(clubName).hostedEvents.add(event);
+                        clubs.get(clubName).getHostedEvents().add(event);
                     }
                 }
             }
@@ -676,7 +555,7 @@ public class Main {
 
     static String getClubNameByEvent(Event targetEvent) {
         for (Club club : clubs.values()) {
-            for (Event e : club.hostedEvents) {
+            for (Event e : club.getHostedEvents()) {
                 if (e.getName().equalsIgnoreCase(targetEvent.getName())) {
                     return club.getClubName();
                 }
@@ -688,8 +567,8 @@ public class Main {
     
 
     static boolean isUserAlreadyRegistered(User user, Event event) {
-        for (String[] reg : user.registeredEvents) {
-            if (reg[1].equalsIgnoreCase(event.getName())) {
+        for (String[] reg : user.getRegisteredEvents()) {
+            if (reg[0].equalsIgnoreCase(event.getName()) && reg[1].equalsIgnoreCase(event.getClub())) {
                 return true;
             }
         }
@@ -700,13 +579,13 @@ public class Main {
     
 
     static void saveAllUsersToFile() {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter("users.txt"))) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("data/users.txt"))) {
             for (Map.Entry<String, User> entry : users.entrySet()) {
                 User user = entry.getValue();
-                String hashed = userCredentials.get(user.username);
+                String hashed = userCredentials.get(user.getName());
                 StringBuilder sb = new StringBuilder();
-                sb.append(user.username).append(",").append(user.name).append(",").append(hashed);
-                for (String[] regEvent : user.registeredEvents) {
+                sb.append(user.getName()).append(",").append(",").append(hashed);
+                for (String[] regEvent : user.getRegisteredEvents()) {
                     sb.append(",").append(regEvent[0]).append(":").append(regEvent[1]);
                 }
                 writer.write(sb.toString() + "\n");
@@ -715,8 +594,34 @@ public class Main {
             System.out.println("Error saving all users.");
         }
     }
+
+    // Helper method to get event by name and club
+    static Event getEventByName(String eventName, String clubName) {
+        for (Club club : clubs.values()) {
+            for (Event event : club.getHostedEvents()) {
+                if (event.getName().equalsIgnoreCase(eventName) && event.getClub().equalsIgnoreCase(clubName)) {
+                    return event;
+                }
+            }
+        }
+        return null;
+    }
     
-    
-    
-    
+    static Event getEventByNameAndClub(String name, String clubName) {
+        Club club = null;
+        for (Club c : clubs.values()) {
+            if (c.getClubName().equals(clubName)) {
+                club = c;
+                break;
+            }
+        }
+        if (club != null) {
+            for (Event e : club.getHostedEvents()) {
+                if (e.getName().equals(name)) {
+                    return e;
+                }
+            }
+        }
+        return null;
+    }
 }
