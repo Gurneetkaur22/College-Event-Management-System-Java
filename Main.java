@@ -1,4 +1,3 @@
-
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
@@ -42,7 +41,7 @@ public class Main {
             try {
                 choice = Integer.parseInt(sc.nextLine());
             } catch (NumberFormatException e) {
-                System.out.println("❌ Invalid input. Please enter a number.");
+                System.out.println(" Invalid input. Please enter a number.");
                 continue;
             }
 
@@ -97,7 +96,7 @@ public class Main {
         Club club = new Club(clubId, name, email, hashedPassword);
         clubs.put(clubId, club);
         saveClubToFile(club);
-        System.out.println("✅ Club registered successfully.");
+        System.out.println(" Club registered successfully.");
     }
 
     static void loginClub() {
@@ -105,7 +104,7 @@ public class Main {
         String clubId = sc.nextLine();
 
         if (!clubs.containsKey(clubId)) {
-            System.out.println("❌ Club not found!");
+            System.out.println(" Club not found!");
             return;
         }
 
@@ -114,10 +113,10 @@ public class Main {
         String hashedPassword = hashPassword(password);
 
         if (clubs.get(clubId).getHashedPassword().equals(hashedPassword)) {
-            System.out.println("✅ Club login successful!");
+            System.out.println(" Club login successful!");
             clubDashboard(clubs.get(clubId));
         } else {
-            System.out.println("❌ Incorrect password!");
+            System.out.println(" Incorrect password!");
         }
     }
 
@@ -149,11 +148,11 @@ public class Main {
 
                     club.createEvent(name, desc, date, time, venue, capacity);
                     saveEventToFile(club.getHostedEvents().get(club.getHostedEvents().size() - 1));
-                    System.out.println("✅ Event created successfully.");
+                    System.out.println(" Event created successfully.");
 
                 }
                 case 2 -> {
-                    System.out.println("📅 Hosted Events:");
+                    System.out.println(" Hosted Events:");
                     // LocalDate today = LocalDate.now();
                 
                     // Sort events by date
@@ -161,7 +160,7 @@ public class Main {
                     sortedEvents.sort(Comparator.comparing(Event::getDate));
                 
                     for (Event e : sortedEvents) {
-                        String status = e.isUpcoming() ? "⏳ Upcoming" : "✅ Completed";
+                        String status = e.isUpcoming() ? " Upcoming" : " Completed";
                         System.out.println("- [" + e.getName() + " on " + e.getDate() + "] [" + status + "]");
                     }
                 }
@@ -177,7 +176,7 @@ public class Main {
                         }
                     }
                     if (eventToUpdate == null) {
-                        System.out.println("❌ Event not found.");
+                        System.out.println(" Event not found.");
                         continue;
                     }
                 
@@ -201,7 +200,7 @@ public class Main {
                     eventToUpdate.setVenue(venue);
                     eventToUpdate.setCapacity(capacity);
                     saveAllClubsToFile();
-                    System.out.println("✅ Event updated successfully.");
+                    System.out.println(" Event updated successfully.");
                 }
                 
                 case 4 -> {
@@ -217,9 +216,9 @@ public class Main {
                     if (eventToDelete != null) {
                         club.getHostedEvents().remove(eventToDelete);
                         saveAllClubsToFile();
-                        System.out.println("✅ Event deleted successfully.");
+                        System.out.println(" Event deleted successfully.");
                     } else {
-                        System.out.println("❌ Event not found.");
+                        System.out.println(" Event not found.");
                     }
                 }
                 
@@ -237,7 +236,7 @@ public class Main {
         String clubId = sc.nextLine();
 
         if (!clubs.containsKey(clubId)) {
-            System.out.println("❌ Club not found.");
+            System.out.println(" Club not found.");
             return;
         }
 
@@ -246,7 +245,7 @@ public class Main {
         String newHashed = hashPassword(newPassword);
         clubs.get(clubId).setHashedPassword(newHashed);
         saveAllClubsToFile();
-        System.out.println("✅ Club password updated successfully!");
+        System.out.println(" Club password updated successfully!");
     }
 
     // User Flow (Register/Login as User)
@@ -285,7 +284,7 @@ public class Main {
         String hashedPassword = hashPassword(password);
         users.put(username, new User(username, name));
         userCredentials.put(username, hashedPassword);
-        System.out.println("✅ User registered successfully.");
+        System.out.println(" User registered successfully.");
         saveUserToFile(users.get(username), hashedPassword);
 
     }
@@ -295,7 +294,7 @@ public class Main {
         String username = sc.nextLine();
 
         if (!users.containsKey(username)) {
-            System.out.println("❌ User not found!");
+            System.out.println(" User not found!");
             return;
         }
         System.out.print("Enter password: ");
@@ -305,10 +304,10 @@ public class Main {
         String storedHashedPassword = userCredentials.get(username);
 
         if (storedHashedPassword.equals(hashedPasswordInput)) {
-            System.out.println("✅ User login successful!");
+            System.out.println(" User login successful!");
             userDashboard(users.get(username));
         } else {
-            System.out.println("❌ Incorrect password!");
+            System.out.println(" Incorrect password!");
         }
     }
 
@@ -335,11 +334,11 @@ public class Main {
                     }
         
                     if (upcomingEvents.isEmpty()) {
-                        System.out.println("✅ No new upcoming events available.");
+                        System.out.println(" No new upcoming events available.");
                         break;
                     }
         
-                    System.out.println("\n📅 Upcoming Events:");
+                    System.out.println("\n Upcoming Events:");
                     for (int i = 0; i < upcomingEvents.size(); i++) {
                         Event e = upcomingEvents.get(i);
                         System.out.println((i + 1) + ". " + e.getDetails() );
@@ -355,20 +354,20 @@ public class Main {
                             // Register the user for the event
                             selectedEvent.getRegisteredUsers().add(user.getName());
                             user.addRegisteredEvent(new String[]{selectedEvent.getName(), selectedEvent.getClub()});
-                            System.out.println("✅ Successfully registered for the event: " + selectedEvent.getName());
+                            System.out.println(" Successfully registered for the event: " + selectedEvent.getName());
                             // saveEventToFile(selectedEvent);
                         } else {
                             // Add the user to the waitlist
                             selectedEvent.getWaitlist().offer(user.getName());
-                            System.out.println("❌ Event is at full capacity! You have been added to the waitlist.");
+                            System.out.println(" Event is at full capacity! You have been added to the waitlist.");
                             // saveEventToFile(selectedEvent);
                         }
                     } else {
-                        System.out.println("❌ Invalid event number.");
+                        System.out.println(" Invalid event number.");
                     }
                 }
                 case 2 -> {
-                    System.out.println("\n📅 Your Registered Events:");
+                    System.out.println("\n Your Registered Events:");
                     if (user.getRegisteredEvents().isEmpty()) {
                         System.out.println("You have not registered for any events.");
                     } else {
@@ -390,20 +389,20 @@ public class Main {
                     if (eventToCancel != null) {
                         eventToCancel.getRegisteredUsers().remove(user.getName());
                         user.getRegisteredEvents().removeIf(e -> e[0].equals(eventName));
-                        System.out.println("✅ Registration canceled for event: " + eventName);
+                        System.out.println(" Registration canceled for event: " + eventName);
                         // Check if anyone on the waitlist can be registered now
                         if (!eventToCancel.getWaitlist().isEmpty()) {
                             String waitlistedUser = eventToCancel.getWaitlist().poll();
                             eventToCancel.getRegisteredUsers().add(waitlistedUser);
-                            System.out.println("✅ Waitlisted user " + waitlistedUser + " has been moved to registered list.");
+                            System.out.println(" Waitlisted user " + waitlistedUser + " has been moved to registered list.");
                         }
                         saveEventToFile(eventToCancel);
                     } else {
-                        System.out.println("❌ You are not registered for the event: " + eventName);
+                        System.out.println(" You are not registered for the event: " + eventName);
                     }
                 }
                 case 4 -> {
-                    System.out.println("\n📅 Your Past Events:");
+                    System.out.println("\n Your Past Events:");
                     if (user.getPastEvents().isEmpty()) {
                         System.out.println("You have not attended any events.");
                     } else {
@@ -426,14 +425,14 @@ public class Main {
         String username = sc.nextLine();
 
         if (!userCredentials.containsKey(username)) {
-            System.out.println("❌ User not found.");
+            System.out.println(" User not found.");
             return;
         }
         System.out.print("Enter new password: ");
         String newPassword = sc.nextLine();
         String newHashed = hashPassword(newPassword);
         userCredentials.put(username, newHashed);
-        System.out.println("✅ Password updated successfully!");
+        System.out.println(" Password updated successfully!");
     }
     
     static String hashPassword(String password) {
