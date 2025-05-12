@@ -57,7 +57,7 @@ public class Main {
         }
     }
 
-    // Club Flow (Register/Login as Club)
+    // Club Flow
     static void clubFlow() {
         while (true) {
             System.out.println("\nClub Menu:");
@@ -153,9 +153,7 @@ public class Main {
                 }
                 case 2 -> {
                     System.out.println(" Hosted Events:");
-                    // LocalDate today = LocalDate.now();
-                
-                    // Sort events by date
+                   
                     List<Event> sortedEvents = new ArrayList<>(club.getHostedEvents());
                     sortedEvents.sort(Comparator.comparing(Event::getDate));
                 
@@ -248,7 +246,7 @@ public class Main {
         System.out.println(" Club password updated successfully!");
     }
 
-    // User Flow (Register/Login as User)
+    // User Flow
     static void userFlow() {
         while (true) {
             System.out.println("\nUser Menu:");
@@ -349,18 +347,17 @@ public class Main {
                     if (eventChoice >= 0 && eventChoice < upcomingEvents.size()) {
                         Event selectedEvent = upcomingEvents.get(eventChoice);
                         
-                        // Check if the event is at full capacity
+                        
                         if (selectedEvent.getRegisteredUsers().size() < selectedEvent.getCapacity()) {
-                            // Register the user for the event
                             selectedEvent.getRegisteredUsers().add(user.getName());
                             user.addRegisteredEvent(new String[]{selectedEvent.getName(), selectedEvent.getClub()});
                             System.out.println(" Successfully registered for the event: " + selectedEvent.getName());
-                            // saveEventToFile(selectedEvent);
+                            
                         } else {
-                            // Add the user to the waitlist
+                            
                             selectedEvent.getWaitlist().offer(user.getName());
                             System.out.println(" Event is at full capacity! You have been added to the waitlist.");
-                            // saveEventToFile(selectedEvent);
+                            
                         }
                     } else {
                         System.out.println(" Invalid event number.");
@@ -390,7 +387,7 @@ public class Main {
                         eventToCancel.getRegisteredUsers().remove(user.getName());
                         user.getRegisteredEvents().removeIf(e -> e[0].equals(eventName));
                         System.out.println(" Registration canceled for event: " + eventName);
-                        // Check if anyone on the waitlist can be registered now
+                        
                         if (!eventToCancel.getWaitlist().isEmpty()) {
                             String waitlistedUser = eventToCancel.getWaitlist().poll();
                             eventToCancel.getRegisteredUsers().add(waitlistedUser);
@@ -541,7 +538,7 @@ public class Main {
                     LocalDate date = LocalDate.parse(eventDate);
                     Event event = new Event(eventName, "", date, LocalTime.MIDNIGHT, "", clubName, 0);
     
-                    // Add the event to the respective club
+                    
                     if (clubs.containsKey(clubName)) {
                         clubs.get(clubName).getHostedEvents().add(event);
                     }
@@ -594,7 +591,7 @@ public class Main {
         }
     }
 
-    // Helper method to get event by name and club
+    
     static Event getEventByName(String eventName, String clubName) {
         for (Club club : clubs.values()) {
             for (Event event : club.getHostedEvents()) {
